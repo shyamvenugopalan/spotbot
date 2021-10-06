@@ -3,7 +3,9 @@
 
 ## Installation
  `pip install spotipy --upgrade`
+
  `pip install requests`
+
  `pip install -U discord.py`
 
 ## Usage
