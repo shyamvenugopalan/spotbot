@@ -2,16 +2,24 @@
 import os
 import re
 import discord
-from discord import channel
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 
+from spotipy.oauth2 import SpotifyOAuth
 from discord.ext import commands
 from dotenv import load_dotenv
 
-MESSAGE_LIMIT = 5000
-PLAYLIST_LIMIT = 500
+MESSAGE_LIMIT = 5000 # Limit for searching message history in channel
+PLAYLIST_LIMIT = 500 # Limit for adding new songs to playlist
 
+'''
+Create .env file in the same directory and set the following environment variables.
+DISCORD_TOKEN='<your discord token>'
+DISCORD_GUILD='<your discord guild>'
+SPOTIPY_CLIENT_ID='<spotify client id>'
+SPOTIPY_CLIENT_SECRET='<spotify client id>'
+SPOTIPY_REDIRECT_URI='http://localhost:9090'
+PLAYLIST_ID='<your playlist id>'
+'''
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
@@ -19,7 +27,7 @@ PLAYLIST_ID = os.getenv('PLAYLIST_ID')
 
 bot = discord.ext.commands.Bot(command_prefix='!')
 
-@bot.command(name='build', help='Builds Playlist from previous messages.')
+@bot.command(name='build', help='Builds playlist from previous messages in channel.')
 async def build(ctx):
     await ctx.send('🤖: Building Playlist!')
 
@@ -29,7 +37,7 @@ async def build(ctx):
     current_track_list = []
     playlist = sp.playlist_items(PLAYLIST_ID)
     for item in playlist["items"]:
-        current_track_list.append(item['track']['id'])
+        current_track_list.append(item['track']['id']) #get list of tracks already in playlist
 
     def is_spotify_track_link(message):
         if len(message.content) == 0:
