@@ -5,6 +5,7 @@ import discord
 import spotipy
 import logging
 
+from logging.handlers import RotatingFileHandler
 from spotipy.oauth2 import SpotifyOAuth
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -13,7 +14,12 @@ MESSAGE_LIMIT = 5000 # Limit for searching message history in channel
 PLAYLIST_LIMIT = 500 # Limit for adding new songs to playlist
 
 # Logging configs
-logging.basicConfig(filename="spotbot.log", format='%(asctime)s - %(levelname)s - %(message)s', encoding='utf-8', level=logging.INFO)
+logger = logging.getLogger("spotbot")
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler("spotbot.log", mode='a', maxBytes=50000000, backupCount=5, encoding='utf-8', delay=0) #50000000Bytes ~ 50MB
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 '''
 Create .env file in the same directory and set the following environment variables.
@@ -34,7 +40,7 @@ bot = discord.ext.commands.Bot(command_prefix='!')
 
 @bot.command(name='build', help='Builds playlist from previous messages in channel.')
 async def build(ctx):
-    logging.info(f"build playlist called by {ctx.author}")
+    logger.info(f"build playlist called by {ctx.author}")
     await ctx.send('🤖: Building Playlist!')
 
     scope = ["playlist-modify-public","playlist-modify-private"]
@@ -44,7 +50,7 @@ async def build(ctx):
     playlist = sp.playlist_items(PLAYLIST_ID)
     for item in playlist["items"]:
         current_track_list.append(item['track']['id']) #get list of tracks already in playlist
-    logging.info(f"playlist contains {len(current_track_list)} tracks")
+    logger.info(f"playlist contains {len(current_track_list)} tracks")
     def is_spotify_track_link(message):
         if len(message.content) == 0:
             return False
@@ -64,14 +70,14 @@ async def build(ctx):
                 for id in ids:
                     if id not in current_track_list:
                         count = count+1
-                        logging.info(f'Adding track: {id}')
+                        logger.info(f'Adding track: {id}')
                         sp.playlist_add_items(PLAYLIST_ID, [id], position=0)
                     else:
-                        logging.info(f'Skipping track: {id}')
+                        logger.info(f'Skipping track: {id}')
                     # await ctx.send(f'🤖: Found Link {msg.content}')
             if count >= PLAYLIST_LIMIT:
                 break
-    logging.info(f'Added {count} new tracks')
+    logger.info(f'Added {count} new tracks')
     await ctx.send(f'🤖: Added {count} new tracks')
     await ctx.send(f'🤖: Playlist Link https://open.spotify.com/playlist/{PLAYLIST_ID}')
 
