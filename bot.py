@@ -63,6 +63,7 @@ async def build(ctx):
         return re.findall(r'.spotify\.com\/track\/([\w-]{22}).', message.content)
 
     count = 0
+    new_tracks = []
     async for msg in ctx.channel.history(limit=MESSAGE_LIMIT, oldest_first=True):
         if msg.author != ctx.bot.user:
             if is_spotify_track_link(msg):
@@ -70,13 +71,15 @@ async def build(ctx):
                 for id in ids:
                     if id not in current_track_list:
                         count = count+1
-                        logger.info(f'Adding track: {id}')
-                        sp.playlist_add_items(PLAYLIST_ID, [id], position=0)
-                    else:
-                        logger.info(f'Skipping track: {id}')
+                        new_tracks.append(id)
+                        # sp.playlist_add_items(PLAYLIST_ID, [id], position=0)
                     # await ctx.send(f'🤖: Found Link {msg.content}')
             if count >= PLAYLIST_LIMIT:
                 break
+    new_tracks = set(new_tracks) # Remove duplicate tracks 
+    for id in new_tracks:
+        sp.playlist_add_items(PLAYLIST_ID, [id], position=0)
+        logger.info(f"added track: {id}")
     logger.info(f'Added {count} new tracks')
     await ctx.send(f'🤖: Added {count} new tracks')
     await ctx.send(f'🤖: Playlist Link https://open.spotify.com/playlist/{PLAYLIST_ID}')
